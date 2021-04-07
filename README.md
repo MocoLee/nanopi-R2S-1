@@ -22,13 +22,14 @@ wget -qO- https://github.com/My-Compile/nanopi-R2S/raw/master/scripts/autoupdate
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-### R1S-R2S-R4S-openwrt固件 在线升级方法:  
-先安装好依赖
+### R2S-immortalwrt-固件 终端内在线升级方法： 
+
 ```bash
-opkg update
-opkg install --force-overwrite pv fdisk
+wget -qO- https://github.com/huyunlei2020/R2S/raw/master/scripts/update.sh | sh
 ```
-然后下载脚本执行
+
+slim纯净版
+
 ```bash
-wget -qO- https://github.com/My-Compile/nanopi-R2S/raw/master/scripts/update.sh | sh
+wget -qO- https://github.com/huyunlei2020/R2S/raw/master/scripts/update.sh | ver=-slim sh
 ```

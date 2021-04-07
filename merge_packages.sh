@@ -1,22 +1,25 @@
-git clone --depth=1 https://github.com/project-lede/luci-app-godproxy && rm -r package/luci-app-godproxy && mv luci-app-godproxy package/
-git clone --depth=1 https://github.com/destan19/OpenAppFilter.git && rm -r package/OpenAppFilter && mv OpenAppFilter package/
-git clone --depth=1 -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git && rm -r package/lean/luci-theme-argon && mv luci-theme-argon package/lean/
+function merge_package(){
+    pn=`echo $1 | rev | cut -d'/' -f 1 | rev`
+    find package/ \( -type l -o -type d \) -name $pn | xargs -r rm -r
+    if [ ! -z "$2" ]; then
+        find package/ \( -type l -o -type d \) -name $2 | xargs -r rm -r
+    fi
 
-svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/luci-app-cifsd && rm -r package/lean/luci-app-ksmbd && mv luci-app-cifsd package/lean/
-svn co https://github.com/coolsnowwolf/packages/trunk/kernel/ksmbd && rm -r package/feeds/packages/ksmbd && mv ksmbd package/feeds/packages/
-svn co https://github.com/coolsnowwolf/packages/trunk/net/ksmbd-tools && rm -r package/feeds/packages/ksmbd-tools && mv ksmbd-tools package/feeds/packages/
+    if [[ $1 == *'/trunk/'* ]]; then
+        svn export $1
+    else
+        git clone $3 --depth=1 $1
+        rm -rf $pn/.git
+    fi
+    mv $pn package/
+}
+
+merge_package https://github.com/linkease/ddnsto-openwrt
+merge_package https://github.com/project-lede/luci-app-godproxy
+merge_package https://github.com/coolsnowwolf/lede/trunk/package/lean/luci-app-cifsd luci-app-ksmbd
+merge_package https://github.com/coolsnowwolf/packages/trunk/kernel/ksmbd
+merge_package https://github.com/coolsnowwolf/packages/trunk/net/ksmbd-tools
 
 if [ $DEVICE = 'r2s' ]; then
-mkdir -p target/linux/rockchip/armv8/base-files/usr/bin &&\
-wget https://github.com/friendlyarm/friendlywrt/raw/master-v19.07.1/target/linux/rockchip-rk3328/base-files/usr/bin/start-rk3328-pwm-fan.sh -qNP target/linux/rockchip/armv8/base-files/usr/bin &&\
-chmod +x target/linux/rockchip/armv8/base-files/usr/bin/start-rk3328-pwm-fan.sh
-mkdir -p target/linux/rockchip/armv8/base-files/etc/init.d &&\
-wget https://github.com/friendlyarm/friendlywrt/raw/master-v19.07.1/target/linux/rockchip-rk3328/base-files/etc/init.d/fa-rk3328-pwmfan -qNP target/linux/rockchip/armv8/base-files/etc/init.d &&\
-chmod +x target/linux/rockchip/armv8/base-files/etc/init.d/fa-rk3328-pwmfan
-mkdir -p target/linux/rockchip/armv8/base-files/etc/rc.d &&\
-ln -sf ../init.d/fa-rk3328-pwmfan target/linux/rockchip/armv8/base-files/etc/rc.d/S96fa-rk3328-pwmfan
-
-git clone --depth=1 https://github.com/NateLol/luci-app-oled && rm -r package/luci-app-oled && mv luci-app-oled package/
+    sed -i "s/enable '0'/enable '1'/" `find feeds/ -type f -name oled | grep config`
 fi
-
-sed -i 's/192.168.1.1/192.168.2.1/' package/base-files/files/bin/config_generate

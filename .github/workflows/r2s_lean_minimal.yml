@@ -1,4 +1,4 @@
-name: r2s Lean版openwrt minimal 
+name: r2s minimal 
 
 on:
   push:
@@ -46,6 +46,8 @@ jobs:
           git remote add upstream https://github.com/coolsnowwolf/openwrt && git fetch upstream
           git checkout upstream/lede-17.01 -b tmp
           git rm README.md
+          sed -i 's/=1/=0/g' package/kernel/linux/files/sysctl-br-netfilter.conf
+          git apply ../../remove_ramfree.diff && git add .
           git commit -m 'reset'
           git checkout master-v19.07.1
           git rebase adc1a9a3676b8d7be1b48b5aed185a94d8e42728^ --onto tmp -X theirs
@@ -55,10 +57,12 @@ jobs:
           . ../../3_prepare_packages.sh
           . ../../add_openclash.sh
           . ../../add_passwall.sh
+          git apply ../../enable_autocore.diff
           sed -i 's/@LINUX_5_4//' package/lean/luci-app-flowoffload/Makefile
           . ../../5_mods.sh
           mv ../../scripts/check_wan4.sh package/base-files/files/usr/bin && sed -i '/exit/i\/bin/sh /usr/bin/check_wan4.sh &' package/base-files/files/etc/rc.local
           mv ../../scripts/autoupdate.sh package/base-files/files/root/au.sh && chmod +x package/base-files/files/root/au.sh
+          
       - name: Build FriendlyWrt
         run: . 4_build_image.sh friendlywrt-rk3328 nanopi_r2s.mk
 
@@ -72,7 +76,7 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.release_token }}
+          GITHUB_TOKEN: ${{ secrets.workflow_token }}
         with:
           tag_name: ${{ steps.assemble_artifact.outputs.release_tag }}
           release_name: 精简${{ steps.assemble_artifact.outputs.release_tag }}
@@ -82,7 +86,7 @@ jobs:
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.release_token }}
+          GITHUB_TOKEN: ${{ secrets.workflow_token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           asset_path: ./artifact.zip
